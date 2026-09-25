@@ -40,3 +40,32 @@ relative_error = abs(std_cost - theoretical_std) / theoretical_std
 
 print(f"Ecart-type theorique : {theoretical_std:.2f} euros")
 print(f"Ecart relatif sur l'ecart-type : {relative_error:.2%}")
+
+# Strategie acceleree : liquidation en 30 minutes
+# On utilise les memes trajectoires que pour TWAP.
+fast_steps = 30
+fast_quantity = initial_inventory / fast_steps
+fast_rate = fast_quantity / dt
+
+fast_execution_prices = prices[:, :fast_steps] - eta * fast_rate
+fast_revenues = fast_quantity * np.sum(fast_execution_prices, axis=1)
+fast_shortfalls = initial_inventory * initial_price - fast_revenues
+
+print("\nComparaison sur les memes trajectoires :")
+print(f"TWAP 60 min : moyenne = {mean_cost:.2f}, ecart-type = {std_cost:.2f} euros")
+print(
+    f"Vente 30 min : moyenne = {fast_shortfalls.mean():.2f}, "
+    f"ecart-type = {fast_shortfalls.std(ddof=1):.2f} euros"
+)
+
+# Critere moyenne-variance : plus le score est faible, mieux c'est
+risk_aversion = 0.001  # En inverse d'euros
+
+twap_score = mean_cost + risk_aversion * np.var(shortfalls, ddof=1)
+fast_score = fast_shortfalls.mean() + risk_aversion * np.var(
+    fast_shortfalls, ddof=1
+)
+
+print(f"\nAversion au risque : {risk_aversion}")
+print(f"Score TWAP 60 min : {twap_score:.2f} euros")
+print(f"Score vente 30 min : {fast_score:.2f} euros")
