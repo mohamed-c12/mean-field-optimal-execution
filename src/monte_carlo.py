@@ -69,3 +69,29 @@ fast_score = fast_shortfalls.mean() + risk_aversion * np.var(
 print(f"\nAversion au risque : {risk_aversion}")
 print(f"Score TWAP 60 min : {twap_score:.2f} euros")
 print(f"Score vente 30 min : {fast_score:.2f} euros")
+
+# Strategie optimale determinee sans utiliser les trajectoires simulees
+theta = np.arccosh(
+    1.0 + risk_aversion * sigma**2 * dt**2 / (2.0 * eta)
+)
+grid = np.arange(n_steps + 1)
+optimal_inventory = initial_inventory * (
+    np.sinh((n_steps - grid) * theta) / np.sinh(n_steps * theta)
+)
+optimal_trades = -np.diff(optimal_inventory)
+
+# Ventes en fin de minute, avec impact propre a chaque quantite
+optimal_execution_prices = prices - eta * optimal_trades / dt
+optimal_revenues = np.sum(
+    optimal_execution_prices * optimal_trades, axis=1
+)
+optimal_shortfalls = initial_inventory * initial_price - optimal_revenues
+
+optimal_mean = optimal_shortfalls.mean()
+optimal_std = optimal_shortfalls.std(ddof=1)
+optimal_score = optimal_mean + risk_aversion * optimal_std**2
+
+print("\nStrategie optimale sur les memes trajectoires :")
+print(f"Shortfall moyen : {optimal_mean:.2f} euros")
+print(f"Ecart-type : {optimal_std:.2f} euros")
+print(f"Score simule : {optimal_score:.2f} euros")
