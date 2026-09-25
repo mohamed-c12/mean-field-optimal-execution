@@ -1,0 +1,14 @@
+# Environnement Python
+.venv/
+
+# Fichiers Python temporaires
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Fichiers macOS
+.DS_Store
+
+# Secrets et configuration locale
+.env
+.env.*
