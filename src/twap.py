@@ -50,3 +50,15 @@ fig.savefig(output_path, dpi=150)
 plt.close(fig)
 
 print(f"Graphique enregistré : {output_path}")
+
+# 7. Cout de l'impact temporaire : parametres illustratifs
+market_price = 100.0  # Euros par action, suppose constant
+eta = 0.006          # Euros * minute / action^2
+
+execution_price = market_price - eta * trading_rate
+revenue = execution_price * initial_inventory
+temporary_cost = eta * trading_rate * initial_inventory
+
+print(f"Prix de vente par action : {execution_price:.2f} euros")
+print(f"Recette totale : {revenue:.2f} euros")
+print(f"Cout temporaire TWAP : {temporary_cost:.2f} euros")
