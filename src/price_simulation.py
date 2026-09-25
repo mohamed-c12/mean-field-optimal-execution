@@ -36,3 +36,19 @@ fig.savefig(output_path, dpi=150)
 plt.close(fig)
 
 print(f"Graphique enregistre : {output_path}")
+
+# Execution TWAP aux fins des 60 intervalles
+initial_inventory = 1000.0
+eta = 0.006
+quantity_per_trade = initial_inventory / n_steps
+trading_rate = quantity_per_trade / dt
+
+execution_prices = prices[1:] - eta * trading_rate
+revenue = np.sum(quantity_per_trade * execution_prices)
+
+# Ecart par rapport a une vente au prix initial, sans impact
+shortfall = initial_inventory * initial_price - revenue
+
+print(f"Prix moyen de vente : {execution_prices.mean():.4f} euros")
+print(f"Recette totale : {revenue:.2f} euros")
+print(f"Implementation shortfall : {shortfall:.2f} euros")
