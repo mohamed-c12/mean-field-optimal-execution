@@ -1,0 +1,12 @@
+{
+  "seed": 0,
+  "learned_first_exit_min": 26.78696317351903,
+  "max_mean_inventory_error_shares": 0.20207985435643394,
+  "max_group_inventory_errors_shares": [
+    0.022508538759765884,
+    0.3295501153494773,
+    0.15435489449430762
+  ],
+  "minimum_sampled_selling_rate": -0.0,
+  "normalized_active_residual_rmse": 0.00045479950930078523
+}

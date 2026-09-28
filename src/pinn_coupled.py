@@ -1,12 +1,15 @@
 from pathlib import Path
 import json
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch import nn
 
-torch.manual_seed(42)
+SEED = int(os.environ.get("COUPLED_SEED", "42"))
+TAG = f"_seed_{SEED}" if "COUPLED_SEED" in os.environ else ""
+torch.manual_seed(SEED)
 torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
 
@@ -178,7 +181,7 @@ assert np.max(np.abs(q[-1])) < 1e-8
 assert q.min() >= -1e-8
 
 metrics = {
-    "seed": 42,
+    "seed": SEED,
     "learned_first_exit_min": exit_time,
     "max_mean_inventory_error_shares": float(
         np.max(np.abs(mean_q - mean_reference))
@@ -198,11 +201,11 @@ for key, value in metrics.items():
 
 (root / "results").mkdir(exist_ok=True)
 (root / "figures").mkdir(exist_ok=True)
-(root / "results" / "pinn_coupled.json").write_text(
+(root / "results" / f"pinn_coupled{TAG}.json").write_text(
     json.dumps(metrics, indent=2) + "\n"
 )
 np.savetxt(
-    root / "results" / "pinn_coupled_paths.csv",
+    root / "results" / f"pinn_coupled_paths{TAG}.csv",
     np.column_stack([times, q, v, mean_q]),
     delimiter=",",
     header="time,q500,q750,q1000,v500,v750,v1000,mean_inventory",
@@ -237,7 +240,7 @@ for ax in axes:
     ax.grid(alpha=0.3)
 
 fig.tight_layout()
-figure = root / "figures" / "pinn_coupled.png"
+figure = root / "figures" / f"pinn_coupled{TAG}.png"
 fig.savefig(figure, dpi=160)
 plt.close(fig)
 print(f"\nGraphique : {figure}")
