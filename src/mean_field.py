@@ -9,7 +9,7 @@ sigma = 0.20
 risk_aversion = 0.001
 gamma = 0.001
 
-def best_response(mean_trades):
+def best_response(mean_trades, trader_risk_aversion=risk_aversion):
     # mean_trades : quantites moyennes vendues par intervalle
     # Convention : impact collectif inclus dans le prix de fin d'intervalle
     price_decline = gamma * np.cumsum(mean_trades)
@@ -21,7 +21,7 @@ def best_response(mean_trades):
         impact = eta / dt * np.sum(trades**2)
         crowd_cost = np.dot(trades, price_decline)
         variance = sigma**2 * dt * np.sum(inventory_before**2)
-        return impact + crowd_cost + risk_aversion * variance
+        return impact + crowd_cost + trader_risk_aversion * variance
 
     result = minimize(
         objective,
