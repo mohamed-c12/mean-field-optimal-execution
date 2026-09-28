@@ -102,3 +102,46 @@ if __name__ == "__main__":
     print(f"Score du calendrier moyen : {equilibrium_score:.8f} EUR")
     print(f"Score de la meilleure reponse : {response_score:.8f} EUR")
     print(f"Gain estime par deviation individuelle : {improvement:.8f} EUR")
+
+    from pathlib import Path
+    import matplotlib.pyplot as plt
+
+    times = np.arange(n_steps + 1) * dt
+
+    # Sans flux collectif : meme risque et meme impact temporaire
+    no_interaction_trades = best_response(np.zeros(n_steps))
+    no_interaction_inventory = q0 - np.concatenate(
+        ([0.0], np.cumsum(no_interaction_trades))
+    )
+    twap_inventory = q0 * (1.0 - times / (n_steps * dt))
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.step(
+        times, twap_inventory, where="post",
+        linestyle="--", label="TWAP"
+    )
+    ax.step(
+        times, no_interaction_inventory, where="post",
+        label="Optimal execution without interactions"
+    )
+    ax.step(
+        times, inventory, where="post",
+        label="Approximate mean-field equilibrium"
+    )
+
+    ax.set_xlabel("Time (minutes)")
+    ax.set_ylabel("Remaining inventory (shares)")
+    ax.set_title("Effect of mean-field interactions on execution")
+    ax.grid(alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+
+    output_path = (
+        Path(__file__).resolve().parent.parent
+        / "figures" / "mean_field_inventory.png"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+
+    print(f"Graphique enregistre : {output_path}")
