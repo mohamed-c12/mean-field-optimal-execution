@@ -1,0 +1,9 @@
+{
+  "seed": 0,
+  "training_seconds": 2.3487561249930877,
+  "test_normalized_residual_rmse": 0.00047727783618543054,
+  "max_relative_value_coefficient_error": 7.30248189347319e-05,
+  "predicted_initial_value_eur": 489.95921802470644,
+  "exact_initial_value_eur": 489.95239383638625,
+  "max_inventory_error_shares": 0.014378494000425235
+}

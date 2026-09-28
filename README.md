@@ -323,3 +323,31 @@ python src/pinn_hjb.py
 
 Metrics are saved in `results/pinn_hjb_metrics.json`.
 The script also generates a local checkpoint in `models/pinn_hjb.pt`.
+
+### Initialization sensitivity and policy cost validation
+
+The reduced HJB PINN was trained with seeds 0, 1 and 42 using the
+same parameters and training procedure.
+
+Learned feedback policies were evaluated by integrating their
+temporary-impact and inventory-risk costs. Integration was repeated
+with tighter tolerances. A nonnegative optimality-gap identity was
+also evaluated independently of the network's predicted value.
+
+| Seed | Maximum sampled inventory error (shares) | Integrated policy optimality gap (EUR) |
+|---:|---:|---:|
+| 0 | 0.014378 | 5.374e-7 |
+| 1 | 0.013988 | 5.289e-7 |
+| 42 | 0.008193 | 2.770e-7 |
+
+The discrepancy between the direct cost difference and the
+nonnegative gap integral was approximately 1.3e-10 EUR.
+
+These experiments show consistent policy accuracy across three
+initializations for one parameter set. They do not establish
+robustness across different market parameters or coupled systems.
+
+![PINN validation](figures/pinn_validation.png)
+
+Run with `python src/validate_pinn.py`.
+Detailed metrics are saved in `results/pinn_validation.csv`.

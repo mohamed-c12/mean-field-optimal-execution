@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import os
 import time
 
 import matplotlib.pyplot as plt
@@ -8,7 +9,9 @@ from scipy.integrate import cumulative_trapezoid
 import torch
 from torch import nn
 
-torch.manual_seed(42)
+SEED = int(os.environ.get("PINN_SEED", "42"))
+TAG = f"_seed_{SEED}" if "PINN_SEED" in os.environ else ""
+torch.manual_seed(SEED)
 torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
 
@@ -110,7 +113,7 @@ assert abs(q_predicted[-1]) < 1e-8
 assert np.all(np.diff(q_predicted) <= 1e-8)
 
 metrics = {
-    "seed": 42,
+    "seed": SEED,
     "training_seconds": training_seconds,
     "test_normalized_residual_rmse": float(
         np.sqrt(np.mean(test_residual**2))
@@ -131,15 +134,15 @@ root = Path(__file__).resolve().parents[1]
 for folder in ("figures", "results", "models"):
     (root / folder).mkdir(exist_ok=True)
 
-(root / "results" / "pinn_hjb_metrics.json").write_text(
+(root / "results" / f"pinn_hjb_metrics{TAG}.json").write_text(
     json.dumps(metrics, indent=2) + "\n"
 )
 torch.save(
     {
         "state_dict": model.state_dict(),
-        "T": T, "eta": ETA, "rho": RHO, "seed": 42,
+        "T": T, "eta": ETA, "rho": RHO, "seed": SEED,
     },
-    root / "models" / "pinn_hjb.pt",
+    root / "models" / f"pinn_hjb{TAG}.pt",
 )
 
 fig, axes = plt.subplots(1, 3, figsize=(15, 4))
@@ -171,7 +174,7 @@ for ax in axes:
     ax.grid(alpha=0.3)
 
 fig.tight_layout()
-figure = root / "figures" / "pinn_hjb.png"
+figure = root / "figures" / f"pinn_hjb{TAG}.png"
 fig.savefig(figure, dpi=160)
 plt.close(fig)
 print(f"\nGraphique : {figure}")
