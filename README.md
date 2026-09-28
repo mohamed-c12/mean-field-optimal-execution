@@ -227,3 +227,49 @@ within-interval model use different execution timing conventions.
 PINNs, adaptive common-noise policies, stochastic order arrivals,
 market making and historical limit-order-book backtesting remain
 future extensions.
+
+## Continuous-time equilibrium reference
+
+An independent continuous-time reference uses matrix exponentials
+and numerical boundary matching for the same three initial inventories,
+population weights, costs and sell-only constraint.
+
+For the current parameters, the 500-share group liquidates at
+approximately 26.755455 minutes. The other two groups remain active
+until the terminal time. Mean inventory at 30 minutes is 15.563787 shares.
+
+The reference implementation assumes this active-set structure and
+checks its feasibility for the current parameters. It is not a general
+active-set solver for arbitrary parameter choices.
+
+### Comparison with the grid solver
+
+Errors in population mean inventory are measured at the 121 time-grid
+nodes, spaced 0.5 minute apart.
+
+| Inventory step (shares) | Maximum absolute error (shares) | RMSE (shares) | Time of maximum error (min) |
+|---:|---:|---:|---:|
+| 5.00 | 18.1774 | 8.3605 | 24.0 |
+| 2.50 | 8.3000 | 3.7504 | 29.5 |
+| 1.25 | 3.7694 | 1.7076 | 34.5 |
+
+The finest grid has a maximum error equal to approximately 0.50%
+of the initial population mean inventory of 750 shares.
+
+Errors combine inventory discretization, time discretization and
+the equilibrium stopping tolerance of EUR 0.10. These experiments
+show decreasing errors under inventory refinement, rather than a
+proof of convergence or a certified error bound.
+
+![Continuous equilibrium reference](figures/continuous_mean_field.png)
+
+![Comparison with continuous reference](figures/continuous_comparison.png)
+
+### Reproduce the comparison
+
+```bash
+python src/continuous_mean_field.py
+python src/compare_continuous.py
+```
+
+Detailed results are stored in `results/continuous_comparison.csv`.
