@@ -12,3 +12,6 @@ __pycache__/
 # Secrets et configuration locale
 .env
 .env.*
+
+# Generated model checkpoints
+/models/
