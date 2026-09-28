@@ -273,3 +273,53 @@ python src/compare_continuous.py
 ```
 
 Detailed results are stored in `results/continuous_comparison.csv`.
+
+## Reduced HJB PINN baseline
+
+A first physics-informed neural network solves the single-agent HJB
+after using its known quadratic inventory structure, V(t,q) = a(t)q².
+
+The terminal singularity is incorporated analytically. The network
+learns a smooth correction by minimizing the normalized residual of
+the resulting Riccati equation. Analytical solution values are used
+only for evaluation, not as training labels.
+
+Implementation:
+- PyTorch, float64, CPU, random seed 42.
+- Two hidden layers with 32 units and tanh activations.
+- Positive correction through a softplus output.
+- 256 training collocation points.
+- 2,000 Adam iterations followed by L-BFGS refinement.
+- Residual evaluation on a separate 1,001-point grid.
+
+Results for this run:
+
+| Metric | Value |
+|---|---:|
+| Normalized test residual RMSE | 0.00039619 |
+| Maximum relative coefficient error | 0.006225% |
+| Predicted initial value | EUR 489.95213 |
+| Analytical initial value | EUR 489.95239 |
+| Maximum sampled inventory error | 0.008193 shares |
+| Training time on the development machine | 2.14 seconds |
+
+Coefficient errors are evaluated for normalized remaining time
+between 0.001 and 1. Inventory is reconstructed by numerical
+integration of the learned feedback policy.
+
+The predicted initial value is the network's value estimate;
+it is not a separately evaluated realized policy cost.
+
+This is a reduced single-agent HJB benchmark using known quadratic
+structure. It does not yet solve the coupled mean-field system
+with neural networks. Results are from one seed and parameter set.
+
+![Reduced HJB PINN](figures/pinn_hjb.png)
+
+Run:
+```bash
+python src/pinn_hjb.py
+```
+
+Metrics are saved in `results/pinn_hjb_metrics.json`.
+The script also generates a local checkpoint in `models/pinn_hjb.pt`.
