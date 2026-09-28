@@ -157,3 +157,52 @@ print(f"Inventaire moyen final : {mean_inventory[-1]:.6f} actions")
 print(f"Erreur maximale de masse : {np.max(np.abs(total_mass - 1.0)):.12f}")
 print(f"Masse minimale : {mass_history.min():.12f}")
 print(f"Proportion liquidee a T : {mass_history[-1, 0]:.6f}")
+
+print("\nPrecision du transport, pas de temps fixe :")
+reference_mean = 750.0 * np.sinh(kappa * T / 2) / np.sinh(kappa * T)
+print(f"Reference continue a 30 min : {reference_mean:.4f} actions")
+
+for n_q in [200, 400, 800]:
+    grid = np.linspace(0.0, q0, n_q + 1)
+    before = grid[:, None]
+    after = grid[None, :]
+
+    costs = (
+        eta * (before - after)**2 / dt
+        + rho * dt / 3.0
+        * (before**2 + before*after + after**2)
+    )
+    costs[after > before] = np.inf
+
+    values = np.full(n_q + 1, np.inf)
+    values[0] = 0.0
+    policies = []
+
+    for _ in range(n_time):
+        candidates = costs + values[None, :]
+        policies.append(np.argmin(candidates, axis=1))
+        values = np.min(candidates, axis=1)
+
+    population = np.zeros(n_q + 1)
+    for initial_q, weight in [(500.0, 0.25), (750.0, 0.50), (1000.0, 0.25)]:
+        index = int(np.argmin(np.abs(grid - initial_q)))
+        population[index] += weight
+
+    mass_error = abs(population.sum() - 1.0)
+
+    for step, policy in enumerate(reversed(policies), start=1):
+        next_population = np.zeros_like(population)
+        np.add.at(next_population, policy, population)
+        population = next_population
+
+        mass_error = max(mass_error, abs(population.sum() - 1.0))
+
+        if step == n_time // 2:
+            mean_at_30 = population @ grid
+
+    print(
+        f"dq={q0 / n_q:.2f} | "
+        f"inventaire moyen a 30 min={mean_at_30:.4f} | "
+        f"erreur absolue={abs(mean_at_30 - reference_mean):.4f} actions | "
+        f"erreur de masse={mass_error:.2e}"
+    )
