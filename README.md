@@ -1,8 +1,8 @@
 # Mean-Field Games for Optimal Execution
 
-Work in progress. The current implementation studies single-agent optimal
-execution with temporary price impact and inventory risk.
-Mean-field interactions are a planned extension and are not implemented yet.
+Work in progress. The project studies single-agent optimal execution
+and approximate discrete-time mean-field equilibria, with homogeneous
+and heterogeneous risk preferences.
 
 ## Model
 
@@ -87,8 +87,71 @@ Figures are saved in the figures directory.
 ## Limitations and next steps
 
 This is a simulation study, not a historical backtest.
-The current model excludes permanent impact, spreads, fees, order-book
-dynamics, and interactions between traders.
+The single-agent baseline excludes permanent impact.
+The mean-field extension includes permanent impact from the population's
+mean trading flow. Spreads, fees and order-book dynamics are not modeled.
 
-Next steps include parameter sensitivity analysis and mean-field interactions.
-PINNs and market making are not implemented.
+Risk-aversion sensitivity and discrete mean-field interactions are implemented.
+A coupled HJB/Fokker-Planck solver, PINNs, adaptive common-noise policies,
+stochastic order flow and market making are not implemented.
+
+## Discrete mean-field extension
+
+Each trader chooses a deterministic, nonnegative liquidation schedule,
+selling 1,000 shares over 60 one-minute intervals.
+
+The expected market price at interval k is:
+
+    E[S_k] = S_0 - gamma * cumulative_mean_sales_k
+
+The population flow is normalized per trader, with gamma = 0.001 EUR/share.
+Execution uses end-of-interval prices including that interval's collective
+impact. Each infinitesimal trader treats the population flow as fixed
+when optimizing an individual schedule.
+
+Equilibria are approximated by damped best-response iteration.
+The stopping criterion is a maximum discrepancy below 0.01 shares per
+interval between the assumed flow and aggregate best responses.
+
+### Homogeneous population
+
+All traders have risk aversion 0.001 per EUR.
+
+- Convergence in 46 iterations.
+- Maximum fixed-point residual: 0.009490 shares per interval.
+- First sale: 121.44 shares.
+- Inventory after 30 minutes: 20.47 shares.
+- Estimated unilateral improvement: approximately 0.00000112 EUR.
+
+![Homogeneous equilibrium](figures/mean_field_inventory.png)
+
+### Heterogeneous population
+
+Three equally weighted groups differ only in risk aversion.
+
+| Risk aversion (1/EUR) | First sale (shares) | Inventory at 30 min (shares) |
+|---|---:|---:|
+| 0.0001 | 83.22 | 154.33 |
+| 0.001 | 119.36 | 18.87 |
+| 0.01 | 248.60 | approximately 0 |
+
+- Convergence in 45 iterations.
+- Maximum aggregate residual: 0.008848 shares per interval.
+- Estimated unilateral improvements against the realized aggregate flow:
+  at most approximately 0.00000012 EUR across the three groups.
+
+These are numerical checks for the specified parameters, not proofs
+of equilibrium uniqueness or convergence for other parameter choices.
+Deviation gains are solver-based estimates, not certified error bounds.
+
+![Heterogeneous equilibrium](figures/heterogeneous_inventory.png)
+
+### Run the extensions
+
+    python src/sensitivity.py
+    python src/crowd_impact.py
+    python src/mean_field.py
+    python src/heterogeneous_mean_field.py
+
+The current equilibrium solver operates on deterministic trading schedules.
+It does not solve a coupled HJB/Fokker-Planck PDE system.
