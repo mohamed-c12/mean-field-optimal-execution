@@ -79,54 +79,59 @@ def equilibrium(n_inventory):
     }
 
 
-root = Path(__file__).resolve().parents[1]
-(root / "figures").mkdir(exist_ok=True)
-(root / "results").mkdir(exist_ok=True)
+def main():
+    root = Path(__file__).resolve().parents[1]
+    (root / "figures").mkdir(exist_ok=True)
+    (root / "results").mkdir(exist_ok=True)
 
-rows = []
-paths = []
-fig, ax = plt.subplots(figsize=(8, 5))
+    rows = []
+    paths = []
+    fig, ax = plt.subplots(figsize=(8, 5))
 
-for nq in (200, 400, 800):
-    print(f"Calcul en cours : dq={1000 / nq:.2f} actions...", flush=True)
-    times, inventory, row = equilibrium(nq)
-    rows.append(row)
-    paths.append(inventory)
-    ax.plot(times, inventory, label=f"dq = {row['dq']:.2f} shares")
-    print(
-        f"  iterations={row['iterations']} | "
-        f"gain={row['deviation_gain_eur']:.6f} EUR | "
-        f"inventaire a 30 min={row['mean_inventory_30min']:.4f} | "
-        f"score={row['population_score_eur']:.6f} EUR",
-        flush=True,
+    for nq in (200, 400, 800):
+        print(f"Calcul en cours : dq={1000 / nq:.2f} actions...", flush=True)
+        times, inventory, row = equilibrium(nq)
+        rows.append(row)
+        paths.append(inventory)
+        ax.plot(times, inventory, label=f"dq = {row['dq']:.2f} shares")
+        print(
+            f"  iterations={row['iterations']} | "
+            f"gain={row['deviation_gain_eur']:.6f} EUR | "
+            f"inventaire a 30 min={row['mean_inventory_30min']:.4f} | "
+            f"score={row['population_score_eur']:.6f} EUR",
+            flush=True,
+        )
+
+    print("\nEcarts maximaux entre trajectoires moyennes :")
+    for i in range(1, len(paths)):
+        difference = np.max(np.abs(paths[i] - paths[i - 1]))
+        print(
+            f"dq={rows[i-1]['dq']:.2f} -> {rows[i]['dq']:.2f} : "
+            f"{difference:.4f} actions"
+        )
+
+    csv_path = root / "results" / "coupled_refinement.csv"
+    with csv_path.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    ax.set(
+        xlabel="Time (minutes)",
+        ylabel="Mean inventory (shares)",
+        title="Coupled equilibrium: inventory grid refinement",
     )
+    ax.grid(alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    figure_path = root / "figures" / "coupled_refinement.png"
+    fig.savefig(figure_path, dpi=160)
+    plt.close(fig)
 
-print("\nEcarts maximaux entre trajectoires moyennes :")
-for i in range(1, len(paths)):
-    difference = np.max(np.abs(paths[i] - paths[i - 1]))
-    print(
-        f"dq={rows[i-1]['dq']:.2f} -> {rows[i]['dq']:.2f} : "
-        f"{difference:.4f} actions"
-    )
+    print("\nToutes les verifications ont reussi.")
+    print(f"Resultats : {csv_path}")
+    print(f"Graphique : {figure_path}")
 
-csv_path = root / "results" / "coupled_refinement.csv"
-with csv_path.open("w", newline="") as handle:
-    writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
-    writer.writeheader()
-    writer.writerows(rows)
 
-ax.set(
-    xlabel="Time (minutes)",
-    ylabel="Mean inventory (shares)",
-    title="Coupled equilibrium: inventory grid refinement",
-)
-ax.grid(alpha=0.3)
-ax.legend()
-fig.tight_layout()
-figure_path = root / "figures" / "coupled_refinement.png"
-fig.savefig(figure_path, dpi=160)
-plt.close(fig)
-
-print("\nToutes les verifications ont reussi.")
-print(f"Resultats : {csv_path}")
-print(f"Graphique : {figure_path}")
+if __name__ == "__main__":
+    main()
