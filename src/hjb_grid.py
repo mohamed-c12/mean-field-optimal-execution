@@ -27,14 +27,31 @@ value = np.full(n_inventory + 1, np.inf)
 value[0] = 0.0
 
 # Recursion de Bellman, de l'echeance vers l'instant initial
+policy_steps = []
+
 for _ in range(n_time):
     total_cost = interval_cost + value[None, :]
+    policy_steps.append(np.argmin(total_cost, axis=1))
     value = np.min(total_cost, axis=1)
+
+# Suivre les decisions optimales depuis l'inventaire initial
+inventory_indices = [n_inventory]
+current_index = n_inventory
+
+for policy in reversed(policy_steps):
+    current_index = int(policy[current_index])
+    inventory_indices.append(current_index)
+
+inventory_path = q_grid[inventory_indices]
+optimal_trades = inventory_path[:-1] - inventory_path[1:]
 
 kappa = np.sqrt(rho / eta)
 exact_value = eta * kappa / np.tanh(kappa * T) * q0**2
 relative_error = abs(value[-1] - exact_value) / exact_value
 
+print(f"Premiere vente optimale : {optimal_trades[0]:.2f} actions")
+print(f"Ventes sur les 5 premiers intervalles : {optimal_trades[:5]}")
+print(f"Inventaire apres 30 minutes : {inventory_path[n_time // 2]:.2f} actions")
 print(f"Pas de temps : {dt:.2f} minute")
 print(f"Pas d'inventaire : {q_grid[1] - q_grid[0]:.2f} actions")
 print(f"Valeur sur grille : {value[-1]:.6f} EUR")
@@ -67,3 +84,48 @@ for n_q in [200, 400, 800]:
         f"valeur={values[-1]:.6f} EUR | "
         f"ecart={error:.4%}"
     )
+
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+times = np.linspace(0.0, T, n_time + 1)
+exact_inventory = (
+    q0 * np.sinh(kappa * (T - times)) / np.sinh(kappa * T)
+)
+
+# Cout du calendrier reconstruit
+reconstructed_cost = np.sum(
+    eta * optimal_trades**2 / dt
+    + rho * dt / 3.0 * (
+        inventory_path[:-1]**2
+        + inventory_path[:-1] * inventory_path[1:]
+        + inventory_path[1:]**2
+    )
+)
+
+print(f"\nInventaire final : {inventory_path[-1]:.6f} actions")
+print(f"Total vendu : {optimal_trades.sum():.6f} actions")
+print(f"Cout du calendrier reconstruit : {reconstructed_cost:.6f} EUR")
+print(f"Ecart avec Bellman : {abs(reconstructed_cost - value[-1]):.10f} EUR")
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(times, exact_inventory, label="Exact continuous solution")
+ax.plot(
+    times, inventory_path, "--",
+    label="Bellman grid: dt=0.5 min, dq=5 shares"
+)
+ax.set_xlabel("Time (minutes)")
+ax.set_ylabel("Remaining inventory (shares)")
+ax.set_title("Bellman policy vs analytical solution")
+ax.grid(alpha=0.3)
+ax.legend()
+fig.tight_layout()
+
+output_path = (
+    Path(__file__).resolve().parent.parent
+    / "figures" / "hjb_inventory.png"
+)
+output_path.parent.mkdir(parents=True, exist_ok=True)
+fig.savefig(output_path, dpi=150)
+plt.close(fig)
+print(f"Graphique enregistre : {output_path}")
