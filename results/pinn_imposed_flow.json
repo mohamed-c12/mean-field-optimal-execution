@@ -1,0 +1,12 @@
+{
+  "seed": 42,
+  "imposed_mean_rate": 12.5,
+  "learned_liquidation_time_min": 32.946004769870065,
+  "exact_liquidation_time_min": 32.94600715294141,
+  "max_sampled_inventory_error_shares": 0.0011933588100703219,
+  "normalized_test_residual_rmse": 1.9276019130274296e-05,
+  "integrated_policy_cost_eur": 616.7698679220234,
+  "exact_policy_cost_eur": 616.7698679083127,
+  "policy_cost_gap_eur": 1.3710746316064615e-08,
+  "quadrature_refinement_change_eur": 2.4101609596982598e-11
+}

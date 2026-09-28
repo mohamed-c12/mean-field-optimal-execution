@@ -351,3 +351,40 @@ robustness across different market parameters or coupled systems.
 
 Run with `python src/validate_pinn.py`.
 Detailed metrics are saved in `results/pinn_validation.csv`.
+
+## PINN response to an imposed population flow
+
+A trajectory PINN solves the continuous-time optimality conditions
+for a trader initially holding 1,000 shares, facing an imposed mean
+selling rate of 12.5 shares per minute.
+
+The network jointly learns the inventory trajectory and an early
+liquidation time. Initial inventory, zero terminal inventory and
+zero selling speed at the learned liquidation time are enforced
+through its parameterization.
+
+Training uses differential-equation residuals without analytical
+trajectory labels. The analytical solution is used only for evaluation.
+
+| Metric | Result |
+|---|---:|
+| Learned liquidation time | 32.94600477 min |
+| Analytical liquidation time | 32.94600715 min |
+| Maximum sampled inventory error | 0.00119336 shares |
+| Normalized test residual RMSE | 1.9276e-5 |
+| Integrated policy cost | EUR 616.7698679 |
+| Estimated policy optimality gap | EUR 1.3711e-8 |
+| Cost change under quadrature refinement | EUR 2.4102e-11 |
+
+The script checks sampled nonnegative selling rates and inventories,
+boundary conditions, and quadrature stability.
+
+This benchmark uses one seed and one constant imposed flow.
+It solves trajectory optimality conditions, not the full HJB PDE,
+and does not yet determine the population flow endogenously.
+The early-liquidation structure is assumed in the parameterization.
+
+![PINN response to imposed flow](figures/pinn_imposed_flow.png)
+
+Run with `python src/pinn_imposed_flow.py`.
+Metrics are saved in `results/pinn_imposed_flow.json`.
