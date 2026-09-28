@@ -84,3 +84,35 @@ fig.savefig(output_path, dpi=150)
 plt.close(fig)
 
 print(f"Graphique enregistre : {output_path}")
+
+from mean_field import eta, sigma, gamma
+
+# Flux effectivement produit par les strategies des trois groupes
+realized_mean_trades = weights @ responses
+fixed_decline = gamma * np.cumsum(realized_mean_trades)
+
+def score(trades, lam):
+    inventory_before = q0 - np.concatenate(
+        ([0.0], np.cumsum(trades[:-1]))
+    )
+    return (
+        eta / dt * np.sum(trades**2)
+        + np.dot(trades, fixed_decline)
+        + lam * sigma**2 * dt * np.sum(inventory_before**2)
+    )
+
+print("\nVerification des deviations individuelles :")
+
+for lam, current_trades in zip(risk_levels, responses):
+    deviation = best_response(
+        realized_mean_trades, trader_risk_aversion=lam
+    )
+    current_score = score(current_trades, lam)
+    best_score = score(deviation, lam)
+    gain = current_score - best_score
+
+    print(
+        f"lambda={lam:.4f} | "
+        f"score actuel={current_score:.8f} EUR | "
+        f"gain par deviation={gain:.8f} EUR"
+    )
