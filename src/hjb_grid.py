@@ -129,3 +129,31 @@ output_path.parent.mkdir(parents=True, exist_ok=True)
 fig.savefig(output_path, dpi=150)
 plt.close(fig)
 print(f"Graphique enregistre : {output_path}")
+
+# Distribution initiale : masses de probabilite sur la grille
+mass = np.zeros(n_inventory + 1)
+
+for initial_q, weight in [(500.0, 0.25), (750.0, 0.50), (1000.0, 0.25)]:
+    index = int(np.argmin(np.abs(q_grid - initial_q)))
+    mass[index] += weight
+
+mass_history = [mass.copy()]
+
+# Transport de la population selon la politique optimale
+for policy in reversed(policy_steps):
+    next_mass = np.zeros_like(mass)
+    np.add.at(next_mass, policy, mass)
+    mass = next_mass
+    mass_history.append(mass.copy())
+
+mass_history = np.array(mass_history)
+total_mass = mass_history.sum(axis=1)
+mean_inventory = mass_history @ q_grid
+
+print("\nTransport de la population sans interaction :")
+print(f"Inventaire moyen initial : {mean_inventory[0]:.2f} actions")
+print(f"Inventaire moyen a 30 min : {mean_inventory[n_time // 2]:.2f} actions")
+print(f"Inventaire moyen final : {mean_inventory[-1]:.6f} actions")
+print(f"Erreur maximale de masse : {np.max(np.abs(total_mass - 1.0)):.12f}")
+print(f"Masse minimale : {mass_history.min():.12f}")
+print(f"Proportion liquidee a T : {mass_history[-1, 0]:.6f}")
